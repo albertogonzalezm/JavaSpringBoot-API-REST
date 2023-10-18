@@ -8,9 +8,7 @@ import com.example.apirest.model.dto.ClientDto;
 import com.example.apirest.model.entity.Client;
 import com.example.apirest.model.payload.ResponseMessage;
 import com.example.apirest.service.IClient;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -40,56 +38,80 @@ public class ClientController {
     public ResponseEntity<?> create(@RequestBody ClientDto clientDto) {
         Client clientSave = null;
         try {
-            clientSave = clientService.save(clientDto);
-            clientDto = ClientDto.builder()
-                    .id(clientSave.getId())
-                    .name(clientSave.getName())
-                    .lastname(clientSave.getLastname())
-                    .email(clientSave.getEmail())
-                    .created_at(clientSave.getCreated_at())
-                    .build();
+            Client findClient = clientService.findById(clientDto.getId());
 
-            return new ResponseEntity<>(
-                    ResponseMessage.builder()
-                            .message("A new client was saved")
-                            .object(clientDto)
-                            .build(),
-                    HttpStatus.CREATED);
+            if (findClient != null) {
+                return new ResponseEntity<>(
+                        ResponseMessage.builder()
+                                .message("Client has already Exist")
+                                .object(null)
+                                .build(),
+                        HttpStatus.CONFLICT);
+            } else {
+                clientSave = clientService.save(clientDto);
+                clientDto = ClientDto.builder()
+                        .id(clientSave.getId())
+                        .name(clientSave.getName())
+                        .lastname(clientSave.getLastname())
+                        .email(clientSave.getEmail())
+                        .created_at(clientSave.getCreated_at())
+                        .build();
+
+                return new ResponseEntity<>(
+                        ResponseMessage.builder()
+                                .message("A new client was saved")
+                                .object(clientDto)
+                                .build(),
+                        HttpStatus.CREATED);
+            }
         } catch (DataAccessException e) {
             return new ResponseEntity<>(
                     ResponseMessage.builder()
                             .message(e.getMessage())
                             .object(clientSave)
                             .build(),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+                    HttpStatus.METHOD_NOT_ALLOWED);
         }
     }
 
-    @PutMapping("client")
-    public ResponseEntity<?> update(@RequestBody ClientDto clientDto) {
+    @PutMapping("client/{id}")
+    public ResponseEntity<?> update(@RequestBody ClientDto clientDto, @PathVariable Integer id) {
         Client clientUpdate = null;
         try {
-            clientUpdate = clientService.save(clientDto);
-            clientDto = ClientDto.builder()
-                    .id(clientUpdate.getId())
-                    .name(clientUpdate.getName())
-                    .lastname(clientUpdate.getLastname())
-                    .email(clientUpdate.getEmail())
-                    .build();
+            Client findClient = clientService.findById(id);
 
-            return new ResponseEntity<>(
-                    ResponseMessage.builder()
-                            .message("")
-                            .object(clientDto)
-                            .build(),
-                    HttpStatus.OK);
+            if (findClient != null) {
+                clientUpdate = clientService.save(clientDto);
+                clientDto = ClientDto.builder()
+                        .id(findClient.getId())
+                        .name(clientUpdate.getName())
+                        .lastname(clientUpdate.getLastname())
+                        .email(clientUpdate.getEmail())
+                        .created_at(findClient.getCreated_at())
+                        .build();
+
+                return new ResponseEntity<>(
+                        ResponseMessage.builder()
+                                .object(clientDto)
+                                .build(),
+                        HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(
+                        ResponseMessage.builder()
+                                .message("Client Not Found")
+                                .object(clientUpdate)
+                                .build(),
+                        HttpStatus.NOT_FOUND
+                );
+            }
+
         } catch (DataAccessException e) {
             return new ResponseEntity<>(
                     ResponseMessage.builder()
                             .message(e.getMessage())
                             .object(clientUpdate)
                             .build(),
-                    HttpStatus.INTERNAL_SERVER_ERROR
+                    HttpStatus.METHOD_NOT_ALLOWED
             );
         }
     }
@@ -108,7 +130,7 @@ public class ClientController {
                             .message(e.getMessage())
                             .object(removedClient)
                             .build(),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+                    HttpStatus.METHOD_NOT_ALLOWED);
         }
     }
 

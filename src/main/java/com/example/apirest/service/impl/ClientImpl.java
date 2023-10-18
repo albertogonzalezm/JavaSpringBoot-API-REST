@@ -46,7 +46,7 @@ public class ClientImpl implements IClient {
 
     @Override
     public List<Client> findAll() {
-        return (List<Client>) clientDao.findAll();
+        return (List) clientDao.findAll();
     }
 
 }

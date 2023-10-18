@@ -14,7 +14,7 @@ import java.util.List;
  */
 public interface IClient {
 
-    Client save(ClientDto clientDto);
+    Client save(ClientDto client);
 
     List<Client> findAll();
     
